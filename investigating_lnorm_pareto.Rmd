@@ -1,0 +1,81 @@
+---
+title: "Investigating the Composite Lognormal-Pareto Distribution"
+author: "Mick Cooney <mickcooney@gmail.com>"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    number_sections: true
+    fig_caption: yes
+    theme: cerulean
+  pdf_document: default
+---
+
+```{r knit_opts, include = FALSE}
+rm(list = ls())
+
+library(tidyverse)
+library(scales)
+library(cowplot)
+
+library(rstan)
+library(bayesplot)
+library(CompLognormal)
+library(actuar)
+
+
+options(width = 80L
+       ,warn  = 1)
+
+knitr::opts_chunk$set(tidy  = FALSE
+                     ,cache = FALSE
+                     ,warning = FALSE
+                     ,message = FALSE
+                     ,fig.height =  7
+                     ,fig.width  = 11)
+
+
+set.seed(42)
+```
+
+# Danish Fire Data
+
+We start off by using the Danish fire dataset, as stored in `fire.data.R`
+
+
+```{r load_fire_data, echo=TRUE}
+source('fire.data.R')
+
+summary(x)
+```
+
+We will first try to fit the data to the Composite Lognormal-Pareto distribution
+using MLE.
+
+```{r fit_mle, echo=TRUE}
+mle_func <- function(p) {
+    -sum(dcomplnorm(x, "pareto", sigma = exp(p[1]), theta = exp(p[2]), shape = exp(p[3]), scale = exp(p[4]), log = TRUE))
+}
+
+dadjpareto <- function(x, sh, sc, log = FALSE) {
+    dpareto(x - sc, sh, sc, log = log)
+}
+
+padjpareto <- function(q, sh, sc, lower.tail = TRUE, log.p = FALSE) {
+    ppareto(q - sc, sh, sc, lower.tail, log.p)
+}
+
+qadjpareto <- function(p, sh, sc, lower.tail = TRUE, log.p = FALSE) {
+    ppareto(p, sh, sc, lower.tail, log.p) + sc
+}
+
+radjpareto <- function(n, sh, sc) {
+    rpareto(n, sh, sc) + sc
+}
+
+mle_2_func <- function(p) -sum(dcomplnorm(x, 'adjpareto', sigma = exp(p[1]), theta = exp(p[2]), sh = exp(p[3]), sc = exp(p[4]), log = TRUE))
+
+```
+
+
+
